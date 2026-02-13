@@ -28,3 +28,7 @@ Charts are interactive — hover for tooltips. Right-click any chart → *Save i
 ## License
 
 For personal/academic use.
+
+## Live Dashboard
+
+**[View the live dashboard here](https://jsorrell99.github.io/Gophernomics---Dashboard-/)**
