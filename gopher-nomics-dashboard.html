@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gopher-Nomics Podcast — Analytics Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --maroon: #7A0019;
+      --gold: #FFCC33;
+      --gold-soft: #FFE180;
+      --dark: #1a1a1a;
+      --card-bg: #ffffff;
+      --body-bg: #f5f2ed;
+      --text: #2c2c2c;
+      --text-muted: #7a7a7a;
+      --border: #e8e4de;
+      --shadow: 0 2px 16px rgba(0,0,0,0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--body-bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--maroon);
+      color: white;
+      padding: 48px 40px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 6px;
+      background: var(--gold);
+    }
+    .header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.6rem;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 1.05rem;
+      opacity: 0.8;
+      font-weight: 400;
+    }
+
+    /* ── KPI Strip ── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding: 32px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .kpi-card .label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .kpi-card .value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.4rem;
+      color: var(--maroon);
+      line-height: 1.1;
+    }
+    .kpi-card .sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── Grid Layout ── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 0 40px 48px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 28px 32px 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .card.full { grid-column: 1 / -1; }
+    .card h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin-bottom: 4px;
+      color: var(--dark);
+    }
+    .card .subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    /* ── Print-Friendly ── */
+    .print-note {
+      text-align: center;
+      padding: 16px 40px 32px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    @media print {
+      .print-note { display: none; }
+      body { background: white; }
+      .header { break-after: avoid; }
+      .card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Gopher-Nomics Podcast</h1>
+    <p>Analytics Dashboard &nbsp;·&nbsp; Nov 14, 2025 – Feb 12, 2026</p>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="label">Total Downloads</div>
+      <div class="value">385</div>
+      <div class="sub">Across 12 episodes</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Unique Listeners</div>
+      <div class="value">283</div>
+      <div class="sub">~91 day window</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Top Episode</div>
+      <div class="value">96</div>
+      <div class="sub">S01 E02 — Hannie Interview</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Mobile Listeners</div>
+      <div class="value">89%</div>
+      <div class="sub">290 of 327 total</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="dashboard">
+
+    <!-- 1. Downloads & Listeners Over Time (Full Width) -->
+    <div class="card full">
+      <h2>Daily Downloads &amp; Listeners</h2>
+      <div class="subtitle">Nov 14, 2025 – Feb 12, 2026</div>
+      <div class="chart-wrap"><canvas id="dailyChart" height="90"></canvas></div>
+    </div>
+
+    <!-- 2. Episode Downloads -->
+    <div class="card full">
+      <h2>Downloads by Episode</h2>
+      <div class="subtitle">Most recent episodes at top</div>
+      <div class="chart-wrap"><canvas id="episodeChart" height="100"></canvas></div>
+    </div>
+
+    <!-- 3. Platforms Pie -->
+    <div class="card">
+      <h2>Platforms</h2>
+      <div class="subtitle">Mobile vs. Computer</div>
+      <div class="chart-wrap"><canvas id="platformChart" height="220"></canvas></div>
+    </div>
+
+    <!-- 4. Devices Doughnut -->
+    <div class="card">
+      <h2>Devices</h2>
+      <div class="subtitle">Breakdown by device type</div>
+      <div class="chart-wrap"><canvas id="deviceChart" height="220"></canvas></div>
+    </div>
+
+    <!-- 5. Apps / Directories -->
+    <div class="card full">
+      <h2>Listening Apps &amp; Directories</h2>
+      <div class="subtitle">Where listeners find the podcast</div>
+      <div class="chart-wrap"><canvas id="appsChart" height="70"></canvas></div>
+    </div>
+
+  </div>
+
+  <div class="print-note">
+    Open in VS Code → right-click → "Open with Live Server" &nbsp;|&nbsp; Right-click any chart → "Save image as…" for presentations
+  </div>
+
+<script>
+// ── Shared palette (UMN inspired) ──
+const MAROON   = '#7A0019';
+const GOLD     = '#FFCC33';
+const GOLD_S   = '#FFE180';
+const SLATE    = '#5B6770';
+const BRICK    = '#A0522D';
+const TEAL     = '#2E8B8B';
+const CORAL    = '#D4654A';
+
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#5a5a5a';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyleWidth = 10;
+
+// ── 1. Daily Downloads & Listeners ──
+const dates = ["11/14","11/15","11/16","11/17","11/18","11/19","11/20","11/21","11/22","11/23","11/24","11/25","11/26","11/27","11/28","11/29","11/30","12/01","12/02","12/03","12/04","12/05","12/06","12/07","12/08","12/09","12/10","12/11","12/12","12/13","12/14","12/15","12/16","12/17","12/18","12/19","12/20","12/21","12/22","12/23","12/24","12/25","12/26","12/27","12/28","12/29","12/30","12/31","01/01","01/02","01/03","01/04","01/05","01/06","01/07","01/08","01/09","01/10","01/11","01/12","01/13","01/14","01/15","01/16","01/17","01/18","01/19","01/20","01/21","01/22","01/23","01/24","01/25","01/26","01/27","01/28","01/29","01/30","01/31","02/01","02/02","02/03","02/04","02/05","02/06","02/07","02/08","02/09","02/10","02/11","02/12"];
+const downloads = [7,2,5,10,11,3,2,2,1,8,3,2,2,1,1,2,1,4,6,4,1,1,1,2,4,3,11,6,2,7,2,5,1,1,1,0,3,3,2,0,0,1,1,3,2,4,7,4,13,4,2,5,5,3,2,1,3,3,2,6,3,3,6,5,4,2,9,12,7,1,2,2,5,8,3,6,2,5,4,4,1,4,3,2,1,1,2,2,6,2,6];
+const listeners = [5,2,4,8,8,3,2,2,1,7,2,2,1,1,1,2,1,4,6,4,1,1,1,2,4,2,8,4,2,5,2,2,1,1,1,0,3,3,1,0,0,1,1,3,2,4,7,4,12,3,2,5,5,3,2,1,2,2,2,6,3,3,6,4,4,2,8,10,6,1,2,2,4,5,3,6,2,4,2,3,1,4,2,2,1,1,2,2,5,2,5];
+
+new Chart(document.getElementById('dailyChart'), {
+  type: 'line',
+  data: {
+    labels: dates,
+    datasets: [
+      {
+        label: 'Downloads',
+        data: downloads,
+        borderColor: MAROON,
+        backgroundColor: MAROON + '18',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        borderWidth: 2.5
+      },
+      {
+        label: 'Listeners',
+        data: listeners,
+        borderColor: GOLD,
+        backgroundColor: GOLD + '15',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        borderWidth: 2.5
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { maxTicksLimit: 15, font: { size: 11 } }
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: '#f0ece6' },
+        ticks: { stepSize: 2 }
+      }
+    },
+    plugins: { legend: { position: 'top', align: 'end' } }
+  }
+});
+
+// ── 2. Episode Downloads (Horizontal Bar) ──
+const epLabels = [
+  'S01 — Welcome',
+  'S01 E02 — Hannie',
+  'S01 E03 — Prof. De',
+  'S01 E04 — Michael H.',
+  'S01 E05 — Eva B.',
+  'S01 E06 — Ben P.',
+  'S01 E07 — Anushka R.',
+  'S01 E08 — Margaret X.',
+  'S01 E09 — Riley S.',
+  'S01 E10 — Tiffany & Annie',
+  'S01 E11 — Aastik M.',
+  'S01 E12 — Prof. Holmes'
+];
+const epDownloads = [42, 96, 51, 34, 18, 10, 9, 44, 26, 14, 32, 9];
+
+new Chart(document.getElementById('episodeChart'), {
+  type: 'bar',
+  data: {
+    labels: epLabels,
+    datasets: [{
+      label: 'Downloads',
+      data: epDownloads,
+      backgroundColor: epDownloads.map(v => v >= 40 ? MAROON : MAROON + '88'),
+      borderRadius: 6,
+      barThickness: 26
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    scales: {
+      x: { beginAtZero: true, grid: { color: '#f0ece6' } },
+      y: { grid: { display: false }, ticks: { font: { size: 11.5 } } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ctx.raw + ' downloads'
+        }
+      }
+    }
+  }
+});
+
+// ── 3. Platforms Pie ──
+new Chart(document.getElementById('platformChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Mobile', 'Computer'],
+    datasets: [{
+      data: [290, 37],
+      backgroundColor: [MAROON, GOLD],
+      borderWidth: 0,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    cutout: '55%',
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+            return ctx.label + ': ' + ctx.raw + ' (' + Math.round(ctx.raw/total*100) + '%)';
+          }
+        }
+      }
+    }
+  }
+});
+
+// ── 4. Devices Doughnut ──
+new Chart(document.getElementById('deviceChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Apple iPhone', 'Android Phone', 'Windows PC', 'Apple Computer'],
+    datasets: [{
+      data: [258, 32, 22, 15],
+      backgroundColor: [MAROON, CORAL, SLATE, TEAL],
+      borderWidth: 0,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    cutout: '55%',
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+            return ctx.label + ': ' + ctx.raw + ' (' + Math.round(ctx.raw/total*100) + '%)';
+          }
+        }
+      }
+    }
+  }
+});
+
+// ── 5. Apps & Directories Bar ──
+const appLabels = ['Apple Podcasts', 'Spotify', 'Chrome', 'Unidentified Apple App', 'Edge', 'Safari', 'Other'];
+const appValues = [204, 74, 32, 6, 6, 2, 3];
+const appColors = [MAROON, '#1DB954', SLATE, TEAL, '#0078D4', '#006CFF', CORAL];
+
+new Chart(document.getElementById('appsChart'), {
+  type: 'bar',
+  data: {
+    labels: appLabels,
+    datasets: [{
+      label: 'Listeners',
+      data: appValues,
+      backgroundColor: appColors,
+      borderRadius: 6,
+      barThickness: 48
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, grid: { color: '#f0ece6' } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ctx.raw + ' listeners (' + Math.round(ctx.raw / 327 * 100) + '%)'
+        }
+      }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
